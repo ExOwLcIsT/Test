@@ -5,25 +5,25 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Test"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="845">
+        Title="MainWindow" Height="486" Width="872">
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="300"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
-
-        <!-- Вхідні дані для вершини і довжин дуг -->
-        <StackPanel Grid.Column="0" Orientation="Vertical" Margin="10">
-            <TextBox x:Name="InputTextBox" Width="280" Height="300" AcceptsReturn="True" VerticalScrollBarVisibility="Auto"/>
-            <Button x:Name="DrawGraphButton" Content="Draw Graph" Width="100" Click="DrawGraphButton_Click" />
-
-            <!-- Нове поле для введення кінцевої вершини -->
-            <TextBlock Text="Find Shortest Path to Vertex:" Margin="0,20,0,0"/>
-            <TextBox x:Name="EndVertexTextBox" Width="280" />
-            <Button x:Name="FindPathButton" Content="Find Shortest Path" Width="150" Click="FindPathButton_Click" />
+        <Canvas Name="GraphCanvas" Background="White" />
+        <Grid Name="ShortestPathGrid" Margin="10" HorizontalAlignment="Right" VerticalAlignment="Top" Width="200">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <TextBlock Text="Shortest Path" FontWeight="Bold" FontSize="14"/>
+            <TextBlock Name="PathDetailsTextBlock" Grid.Row="1"/>
+        </Grid>
+        <Button Content="Draw Graph" Click="DrawGraphButton_Click" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,15,0,0" />
+        <Button Content="Find Path" Click="FindPathButton_Click" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,368,0,0" RenderTransformOrigin="0.918,1.068"/>
+        <TextBox  Name="InputTextBox" Width="100"  Height="277" AcceptsReturn="True" VerticalAlignment="Top" Margin="10,40,735,0" VerticalScrollBarVisibility="Visible"/>
+        <TextBox Name="EndVertexTextBox" Width="100" Height="30" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,399,0,0"/>
+        <StackPanel Margin="627,40,18,262">
+            <TextBlock x:Name="PathLengthTextBlock" FontSize="14" Foreground="Black" />
+            <TextBlock x:Name="TotalLengthTextBlock" FontSize="14" Foreground="Black" />
         </StackPanel>
-
-        <!-- Канва для графіка -->
-        <Canvas x:Name="GraphCanvas" Grid.Column="1" VerticalAlignment="Stretch" Background="LightGray"/>
     </Grid>
+
 </Window>

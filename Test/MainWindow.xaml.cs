@@ -54,8 +54,8 @@ namespace Test
         }
         private void AddVertex(int vertexNumber)
         {
-            double circleX = 50 + (vertices.Count % 5) * 100; // Вирівнювання по горизонталі
-            double circleY = (GraphCanvas.ActualHeight/2)  + (vertices.Count / 5) * 100; // Вирівнювання по вертикалі
+            double circleX = (GraphCanvas.ActualWidth / 4) + 50 + (vertices.Count % 5) * 100; // Вирівнювання по горизонталі
+            double circleY = (GraphCanvas.ActualHeight / 2) + (vertices.Count / 5) * 100; // Вирівнювання по вертикалі
 
             Ellipse circle = new Ellipse
             {
@@ -136,65 +136,20 @@ namespace Test
         {
             if (int.TryParse(EndVertexTextBox.Text, out int endVertex))
             {
-                FindShortestPath(1, endVertex);
+                // Calculate the shortest path
+                var result = CalculateShortestPath(endVertex);
+
+                // Display the path and length in the grid
+                PathLengthTextBlock.Text = $"Shortest Path: {string.Join(" -> ", result.path)}";
+                TotalLengthTextBlock.Text = $"Total Length: {result.length}";
+
+                // Highlight the shortest path using the previous vertices
+                HighlightShortestPath(endVertex, result.previousVertices);
             }
             else
             {
                 MessageBox.Show("Invalid vertex. Please enter a valid integer.");
             }
-        }
-
-        private void FindShortestPath(int startVertex, int endVertex)
-        {
-            Dictionary<int, double> distances = new Dictionary<int, double>();
-            Dictionary<int, int?> previousVertices = new Dictionary<int, int?>();
-
-            foreach (var vertex in vertices)
-            {
-                distances[vertex.Key] = double.MaxValue;
-                previousVertices[vertex.Key] = null;
-            }
-
-            distances[startVertex] = 0;
-
-            var priorityQueue = new SortedSet<Tuple<double, int>>(Comparer<Tuple<double, int>>.Create((x, y) =>
-            {
-                int result = x.Item1.CompareTo(y.Item1);
-                return result == 0 ? x.Item2.CompareTo(y.Item2) : result;
-            }));
-
-            priorityQueue.Add(Tuple.Create(0.0, startVertex));
-
-            while (priorityQueue.Count > 0)
-            {
-                var current = priorityQueue.Min;
-                priorityQueue.Remove(current);
-
-                double currentDistance = current.Item1;
-                int currentVertex = current.Item2;
-
-                if (currentVertex == endVertex)
-                {
-                    break;
-                }
-
-                foreach (var edge in graphEdges[currentVertex])
-                {
-                    int neighbor = edge.Key;
-                    double weight = edge.Value;
-
-                    double newDist = currentDistance + weight;
-                    if (newDist < distances[neighbor])
-                    {
-                        priorityQueue.Remove(Tuple.Create(distances[neighbor], neighbor));
-                        distances[neighbor] = newDist;
-                        previousVertices[neighbor] = currentVertex;
-                        priorityQueue.Add(Tuple.Create(newDist, neighbor));
-                    }
-                }
-            }
-
-            HighlightShortestPath(endVertex, previousVertices);
         }
 
         private void HighlightShortestPath(int endVertex, Dictionary<int, int?> previousVertices)
@@ -220,5 +175,100 @@ namespace Test
                 current = previous;
             }
         }
+        private (List<string> path, int length, Dictionary<int, int?> previousVertices) CalculateShortestPath(int n)
+        {
+            List<string> ar = new List<string>();
+            Dictionary<string, int> dictionary = new Dictionary<string, int>();
+            Dictionary<int, int> H_dic = new Dictionary<int, int>();
+            Dictionary<int, int?> previousVertices = new Dictionary<int, int?>();
+
+            // Initialize H_dic and previousVertices for all vertices
+            for (int i = 1; i <= n; i++)
+            {
+                H_dic[i] = int.MaxValue; // Set initial distance to max for unvisited
+                previousVertices[i] = null; // No previous vertex initially
+            }
+
+            // Distance from start vertex (1) to itself is 0
+            H_dic[1] = 0; // Start vertex distance to itself is 0
+
+            // Simulate the input data
+            foreach (var edge in graphEdges)
+            {
+                foreach (var target in edge.Value)
+                {
+                    string key = $"{edge.Key}-{target.Key}";
+                    dictionary[key] = (int)target.Value; // Assuming weight is an int
+                }
+            }
+
+            List<int> start = new List<int> { 1 }; // Start from vertex 1
+            List<int> end = new List<int>();
+
+            for (int i = 2; i <= n; i++)
+            {
+                end.Add(i);
+            }
+
+            while (end.Count != 0)
+            {
+                List<int> x = new List<int>();
+                List<string> our_key = new List<string>();
+
+                foreach (string i in dictionary.Keys)
+                {
+                    string[] el = i.Split('-');
+                    int el1 = int.Parse(el[0]);
+                    int el2 = int.Parse(el[1]);
+
+                    if (start.Contains(el1) && !start.Contains(el2))
+                    {
+                        our_key.Add(i);
+                        int sum = H_dic[el1];
+                        x.Add(dictionary[i] + sum);
+                    }
+                }
+
+                if (x.Count == 0) break; // Prevent errors if no edges are found
+
+                int min_val = int.MaxValue;
+                int ind = -1;
+
+                for (int j = 0; j < x.Count; j++)
+                {
+                    if (x[j] < min_val)
+                    {
+                        min_val = x[j];
+                        ind = j;
+                    }
+                }
+
+                string[] finalEl = our_key[ind].Split('-');
+                int el2Final = int.Parse(finalEl[1]);
+                start.Add(el2Final);
+                end.Remove(el2Final);
+
+                // Update previous vertices
+                previousVertices[el2Final] = int.Parse(finalEl[0]);
+                H_dic[el2Final] = min_val;
+            }
+
+            // Extract the path from previousVertices
+            List<string> path = new List<string>();
+            int? current = n; // Start from the end vertex
+            while (current != null)
+            {
+                path.Add(current.ToString());
+                current = previousVertices[(int)current];
+            }
+            path.Reverse(); // Reverse to get the correct order
+
+            int totalLength = H_dic.ContainsKey(n) ? H_dic[n] : int.MaxValue; // The length to the last vertex
+
+            return (path, totalLength, previousVertices);
+        }
+
+
+
     }
 }
