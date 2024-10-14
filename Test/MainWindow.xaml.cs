@@ -21,6 +21,10 @@ namespace Test
 
         private void DrawGraphButton_Click(object sender, RoutedEventArgs e)
         {
+            DrawGraph();
+        }
+        private void DrawGraph()
+        {
             GraphCanvas.Children.Clear();
             vertices.Clear();
             graphEdges.Clear();
@@ -48,12 +52,10 @@ namespace Test
                 AddEdge(vertex1, vertex2, weight);
             }
         }
-
         private void AddVertex(int vertexNumber)
         {
-            // Розташування вершин у координатах
-            double circleX = 50 + (vertices.Count % 5) * 150; // Вирівнювання по горизонталі
-            double circleY = 50 + (vertices.Count / 5) * 100; // Вирівнювання по вертикалі
+            double circleX = 50 + (vertices.Count % 5) * 100; // Вирівнювання по горизонталі
+            double circleY = (GraphCanvas.ActualHeight/2)  + (vertices.Count / 5) * 100; // Вирівнювання по вертикалі
 
             Ellipse circle = new Ellipse
             {
@@ -114,7 +116,7 @@ namespace Test
             var arcSegment = new ArcSegment
             {
                 Point = p2,
-                Size = new Size(40, 40), // Розмір дуги
+                Size = new Size(20, 20), // Розмір дуги
                 SweepDirection = SweepDirection.Clockwise,
                 IsLargeArc = false
             };
@@ -197,6 +199,7 @@ namespace Test
 
         private void HighlightShortestPath(int endVertex, Dictionary<int, int?> previousVertices)
         {
+            DrawGraph();
             foreach (var circle in circles)
             {
                 circle.Value.Fill = Brushes.LightBlue;

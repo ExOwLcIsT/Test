@@ -24,6 +24,6 @@
         </StackPanel>
 
         <!-- Канва для графіка -->
-        <Canvas x:Name="GraphCanvas" Grid.Column="1" Background="LightGray"/>
+        <Canvas x:Name="GraphCanvas" Grid.Column="1" VerticalAlignment="Stretch" Background="LightGray"/>
     </Grid>
 </Window>
