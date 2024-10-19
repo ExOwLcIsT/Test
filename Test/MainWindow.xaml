@@ -5,9 +5,11 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Test"
         mc:Ignorable="d"
-        Title="MainWindow" Height="486" Width="872">
+        Title="MainWindow" Height="545" Width="872">
     <Grid>
-        <Canvas Name="GraphCanvas" Background="White" />
+        <Canvas Name="GraphCanvas" Background="White" >
+
+        </Canvas>
         <Grid Name="ShortestPathGrid" Margin="10" HorizontalAlignment="Right" VerticalAlignment="Top" Width="200">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -15,14 +17,16 @@
             </Grid.RowDefinitions>
             <TextBlock Text="Shortest Path" FontWeight="Bold" FontSize="14"/>
             <TextBlock Name="PathDetailsTextBlock" Grid.Row="1"/>
+
         </Grid>
         <Button Content="Draw Graph" Click="DrawGraphButton_Click" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,15,0,0" />
         <Button Content="Find Path" Click="FindPathButton_Click" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,368,0,0" RenderTransformOrigin="0.918,1.068"/>
+        <Button Content="Button" Click="ShowMinCutButton_Click" Margin="10,436,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Height="27" Width="100"/>
         <TextBox  Name="InputTextBox" Width="100"  Height="277" AcceptsReturn="True" VerticalAlignment="Top" Margin="10,40,735,0" VerticalScrollBarVisibility="Visible"/>
         <TextBox Name="EndVertexTextBox" Width="100" Height="30" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,399,0,0"/>
         <StackPanel Margin="627,40,18,262">
-            <TextBlock x:Name="PathLengthTextBlock" FontSize="14" Foreground="Black" />
-            <TextBlock x:Name="TotalLengthTextBlock" FontSize="14" Foreground="Black" />
+            <TextBlock x:Name="PathLengthTextBlock" FontSize="14" Foreground="Black" Height="47" TextWrapping="Wrap"/>
+            <TextBlock x:Name="TotalLengthTextBlock" FontSize="14" Foreground="Black" Height="59" />
         </StackPanel>
     </Grid>
 

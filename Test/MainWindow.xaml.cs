@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -55,7 +56,7 @@ namespace Test
         private void AddVertex(int vertexNumber)
         {
             double circleX = (GraphCanvas.ActualWidth / 4) + 50 + (vertices.Count % 5) * 100; // Вирівнювання по горизонталі
-            double circleY = (GraphCanvas.ActualHeight / 2) + (vertices.Count / 5) * 100; // Вирівнювання по вертикалі
+            double circleY = (GraphCanvas.ActualHeight / 2) + (vertices.Count / 5) * 150; // Вирівнювання по вертикалі
 
             Ellipse circle = new Ellipse
             {
@@ -267,6 +268,225 @@ namespace Test
 
             return (path, totalLength, previousVertices);
         }
+
+
+
+
+
+
+
+
+        private void ShowMinCutButton_Click(object sender, RoutedEventArgs e)
+        {
+            List<string> ar = new List<string>();
+            Dictionary<string, int> dictionary = new Dictionary<string, int>();
+            Dictionary<string, int> inverse = new Dictionary<string, int>();
+
+            try
+            {
+                string[] lines = InputTextBox.Text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var line in lines)
+                {
+                    ar.Add(line);
+                }
+
+                // Заповнення словників
+                foreach (string i in ar)
+                {
+                    string[] keyValue = i.Split(new[] { " " }, StringSplitOptions.RemoveEmptyEntries);
+                    if (keyValue.Length == 2)
+                    {
+                        string key = keyValue[0];
+                        int value;
+                        if (int.TryParse(keyValue[1], out value))
+                        {
+                            dictionary[key] = value;
+                            inverse[key] = 0;
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Помилка перетворення значення {keyValue[1]} в int.");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Неправильний формат рядка: {i}");
+                    }
+                }
+                int n = int.Parse(EndVertexTextBox.Text);
+                List<string> t = new List<string>();
+                List<int> max_val = new List<int>();
+                List<string> r = new List<string>();
+                bool status = false;
+                List<List<string>> ways = new List<List<string>>();
+                List<string> bad = new List<string>();
+
+                Dictionary<int, int> H_dic = new Dictionary<int, int>();
+                Dictionary<int, int> H_Bad_dic = new Dictionary<int, int>();
+
+                List<int> min_r = new List<int>();
+                int start = 1;
+
+                while (!status)
+                {
+                    t.Clear();
+                    max_val.Clear();
+
+                    while (start != n)
+                    {
+                        List<int> x = new List<int>();
+                        List<string> our_key = new List<string>();
+
+                        foreach (var kvp in dictionary)
+                        {
+                            string[] keys = kvp.Key.Split('-');
+                            if (keys.Length == 2)
+                            {
+                                int el1, el2;
+                                if (int.TryParse(keys[0], out el1) && int.TryParse(keys[1], out el2))
+                                {
+                                    if (start == el1)
+                                    {
+                                        if (!r.Contains(kvp.Key))
+                                        {
+                                            our_key.Add(kvp.Key);
+                                            int sub = dictionary[kvp.Key] - inverse[kvp.Key];
+                                            if (sub == 0)
+                                            {
+                                                bad.Add(kvp.Key);
+                                                if (!r.Contains(kvp.Key))
+                                                    r.Add(kvp.Key);
+                                            }
+                                            x.Add(sub);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        if (x.Count == 0)
+                            break;
+
+                        max_val.Add(x.Max());
+                        if (x.Max() == 0)
+                            break;
+
+                        int ind = x.IndexOf(x.Max());
+                        t.Add(our_key[ind]);
+                        start = int.Parse(our_key[ind].Split('-')[1]);
+                    }
+
+                    if (t.Count == 0)
+                        break;
+
+                    ways.Add(new List<string>(t));
+                    int min_val = max_val.Min();
+                    min_r.Add(min_val);
+
+                    foreach (string i in t)
+                    {
+                        inverse[i] += min_val;
+                    }
+
+                    foreach (var kvp in dictionary)
+                    {
+                        int sub = kvp.Value - inverse[kvp.Key];
+                        if (sub == 0)
+                        {
+                            bad.Add(kvp.Key);
+                            if (!r.Contains(kvp.Key))
+                                r.Add(kvp.Key);
+                        }
+                    }
+
+                    start = 1;
+
+                    for (int n1 = 1; n1 <= n; n1++)
+                    {
+                        int k1 = 0;
+                        foreach (var kvp in dictionary)
+                        {
+                            if (int.Parse(kvp.Key.Split('-')[0]) == n1)
+                                k1++;
+                        }
+                        H_dic[n1] = k1;
+                    }
+
+                    H_Bad_dic.Clear();
+                    for (int i = 1; i <= n; i++)
+                        H_Bad_dic[i] = 0;
+
+                    foreach (var kvp in dictionary)
+                    {
+                        if (r.Contains(kvp.Key))
+                        {
+                            int el1 = int.Parse(kvp.Key.Split('-')[0]);
+                            if (H_Bad_dic.Keys.Contains(el1))
+                                H_Bad_dic[el1]++;
+                        }
+                    }
+                }
+                DrawGraph();
+                foreach (var way in ways)
+                    Console.WriteLine(string.Join(", ", way));
+                foreach (var item in r)
+                {
+                    int previous = int.Parse(item.Split("-")[0]);
+                    int current = int.Parse(item.Split("-")[1]);
+                    DrawEdge(previous, current, Brushes.Magenta);
+                }
+                _ = min_r;
+
+            }
+            catch (Exception ex)
+            {
+                var st = new StackTrace(ex, true);
+                // Get the top stack frame
+                var frame = st.GetFrame(0);
+                // Get the line number from the stack frame
+                var line = frame.GetFileLineNumber();
+                MessageBox.Show($"Помилка: {ex.Message} on line {line}");
+            }
+        }
+        private HashSet<int> GetReachableVertices(int source)
+        {
+            var visited = new HashSet<int>();
+            var queue = new Queue<int>();
+            queue.Enqueue(source);
+
+            while (queue.Count > 0)
+            {
+                int current = queue.Dequeue();
+                visited.Add(current);
+
+                foreach (var neighbor in graphEdges[current])
+                {
+                    if (!visited.Contains(neighbor.Key) && neighbor.Value > 0) // Залишкова пропускна здатність
+                    {
+                        queue.Enqueue(neighbor.Key);
+                    }
+                }
+            }
+
+            return visited;
+        }
+
+        private void HighlightMinCutEdges(List<(int, int)> minCutEdges)
+        {
+            DrawGraph(); // Очищення графу
+
+            foreach (var circle in circles)
+            {
+                circle.Value.Fill = Brushes.LightBlue; // Скидання кольору вершин
+            }
+
+            // Виділення дуг, що входять до мінімального перерізу
+            foreach (var edge in minCutEdges)
+            {
+                DrawEdge(edge.Item1, edge.Item2, Brushes.Green); // Виділяємо зеленим кольором
+            }
+        }
+
 
 
 
