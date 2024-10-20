@@ -3,9 +3,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using System.Windows.Media.Media3D;
 using System.Windows.Shapes;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace Test
 {
@@ -166,14 +164,11 @@ namespace Test
         {
             if (int.TryParse(EndVertexTextBox.Text, out int endVertex))
             {
-                // Calculate the shortest path
                 var result = CalculateShortestPath(endVertex);
 
-                // Display the path and length in the grid
                 PathLengthTextBlock.Text = $"Shortest Path: {string.Join(" -> ", result.path)}";
                 TotalLengthTextBlock.Text = $"Total Length: {result.length}";
 
-                // Highlight the shortest path using the previous vertices
                 HighlightShortestPath(endVertex, result.previousVertices);
             }
             else
@@ -302,13 +297,6 @@ namespace Test
             return (path, totalLength, previousVertices);
         }
 
-
-
-
-
-
-
-
         private void ShowMinCutButton_Click(object sender, RoutedEventArgs e)
         {
             List<string> ar = new List<string>();
@@ -323,7 +311,6 @@ namespace Test
                     ar.Add(line);
                 }
 
-                // Заповнення словників
                 foreach (string i in ar)
                 {
                     string[] keyValue = i.Split(new[] { " " }, StringSplitOptions.RemoveEmptyEntries);
@@ -510,13 +497,10 @@ namespace Test
                 Title = "Select a text file"
             };
 
-            // Відображаємо діалогове вікно вибору файлу
             if (openFileDialog.ShowDialog() == true)
             {
-                // Читання вибраного файлу та його вмісту
                 string fileContent = File.ReadAllText(openFileDialog.FileName);
 
-                // Заповнення текстбоксу вмістом файлу
                 InputTextBox.Text = fileContent;
             }
         }
