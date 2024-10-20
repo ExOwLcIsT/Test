@@ -33,26 +33,32 @@ namespace Test
             graphEdges.Clear();
             circles.Clear();
             edges.Clear();
-
-            string[] lines = InputTextBox.Text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-            foreach (var line in lines)
+            try
             {
-                string[] parts = line.Split(' ');
-                int vertex1 = int.Parse(parts[0].Split('-')[0]);
-                int vertex2 = int.Parse(parts[0].Split('-')[1]);
-                double weight = double.Parse(parts[1]);
-
-                if (!vertices.ContainsKey(vertex1))
+                string[] lines = InputTextBox.Text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var line in lines)
                 {
-                    AddVertex(vertex1);
-                }
+                    string[] parts = line.Split(' ');
+                    int vertex1 = int.Parse(parts[0].Split('-')[0]);
+                    int vertex2 = int.Parse(parts[0].Split('-')[1]);
+                    double weight = double.Parse(parts[1]);
 
-                if (!vertices.ContainsKey(vertex2))
-                {
-                    AddVertex(vertex2);
-                }
+                    if (!vertices.ContainsKey(vertex1))
+                    {
+                        AddVertex(vertex1);
+                    }
 
-                AddEdge(vertex1, vertex2, weight);
+                    if (!vertices.ContainsKey(vertex2))
+                    {
+                        AddVertex(vertex2);
+                    }
+
+                    AddEdge(vertex1, vertex2, weight);
+                }
+            }
+            catch (Exception ex)
+            {
+
             }
         }
         private void AddVertex(int vertexNumber)
@@ -441,13 +447,8 @@ namespace Test
 
             }
             catch (Exception ex)
-            {
-                var st = new StackTrace(ex, true);
-                // Get the top stack frame
-                var frame = st.GetFrame(0);
-                // Get the line number from the stack frame
-                var line = frame.GetFileLineNumber();
-                MessageBox.Show($"Помилка: {ex.Message} on line {line}");
+            {               
+                MessageBox.Show($"Помилка: {ex.Message}");
             }
         }
         private HashSet<int> GetReachableVertices(int source)
