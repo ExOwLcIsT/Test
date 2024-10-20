@@ -1,5 +1,6 @@
 ﻿using Microsoft.Win32;
 using System.IO;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -15,6 +16,7 @@ namespace Test
         private Dictionary<int, TextBlock> numbers = new Dictionary<int, TextBlock>();
         private List<System.Windows.Shapes.Path> edges = new List<System.Windows.Shapes.Path>();
         private HashSet<int> verts = new HashSet<int>();
+        Dictionary<int, int> levels = new Dictionary<int, int>();
 
         public MainWindow()
         {
@@ -34,7 +36,9 @@ namespace Test
             edges.Clear();
             try
             {
+                // Парсинг введених даних для графу
                 string[] lines = InputTextBox.Text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                Dictionary<int, List<int>> adjacencyList = new Dictionary<int, List<int>>();
                 foreach (var line in lines)
                 {
                     string[] parts = line.Split(' ');
@@ -43,24 +47,34 @@ namespace Test
                     double weight = double.Parse(parts[1]);
                     verts.Add(vertex1);
                     verts.Add(vertex2);
+
+                    if (!adjacencyList.ContainsKey(vertex1))
+                        adjacencyList[vertex1] = new List<int>();
+                    adjacencyList[vertex1].Add(vertex2);
                 }
+
+                // Алгоритм BFS для визначення рівнів
+                Dictionary<int, int> vertexLevels = GetVertexLevels(adjacencyList);
+
+                // Додаємо вершини, малюємо граф
+                foreach (var vertex in verts)
+                {
+                    if (!vertices.ContainsKey(vertex))
+                    {
+                        AddVertex(vertex, vertexLevels[vertex]);
+                    }
+                }
+
                 foreach (var line in lines)
                 {
                     string[] parts = line.Split(' ');
                     int vertex1 = int.Parse(parts[0].Split('-')[0]);
                     int vertex2 = int.Parse(parts[0].Split('-')[1]);
                     double weight = double.Parse(parts[1]);
-                    if (!vertices.ContainsKey(vertex1))
-                    {
-                        AddVertex(vertex1);
-                    }
 
-                    if (!vertices.ContainsKey(vertex2))
-                    {
-                        AddVertex(vertex2);
-                    }
                     AddEdge(vertex1, vertex2, weight);
                 }
+
                 foreach (var v in verts)
                 {
                     DrawVertex(v);
@@ -68,27 +82,58 @@ namespace Test
             }
             catch (Exception ex)
             {
-
+                // Обробка винятків
             }
         }
-        private void DrawVertex(int vertexNumber)
+
+        // Метод для визначення рівнів вершин за допомогою BFS
+        private Dictionary<int, int> GetVertexLevels(Dictionary<int, List<int>> adjacencyList)
         {
-            GraphCanvas.Children.Remove(circles[vertexNumber]);
-            GraphCanvas.Children.Add(circles[vertexNumber]);
-            GraphCanvas.Children.Remove(numbers[vertexNumber]);
-            GraphCanvas.Children.Add(numbers[vertexNumber]);
+            Queue<int> queue = new Queue<int>();
+            HashSet<int> visited = new HashSet<int>();
+
+            // Початково додаємо першу вершину на рівень 0
+            int startVertex = verts.First(); // перший елемент списку вершин
+            queue.Enqueue(startVertex);
+            levels[startVertex] = 0;
+            visited.Add(startVertex);
+
+            while (queue.Count > 0)
+            {
+                int vertex = queue.Dequeue();
+                int currentLevel = levels[vertex];
+
+                if (adjacencyList.ContainsKey(vertex))
+                {
+                    foreach (var neighbor in adjacencyList[vertex])
+                    {
+                        if (!visited.Contains(neighbor))
+                        {
+                            visited.Add(neighbor);
+                            levels[neighbor] = currentLevel + 1; // Наступний рівень
+                            queue.Enqueue(neighbor);
+                        }
+                    }
+                }
+            }
+
+            return levels;
         }
-        private void AddVertex(int vertexNumber)
+
+        // Оновлений метод AddVertex для розміщення вершин по рівнях
+        private void AddVertex(int vertexNumber, int level)
         {
-            double centerX = GraphCanvas.ActualWidth / 2;
-            double centerY = GraphCanvas.ActualHeight / 2 + 50;
-            double radius = Math.Min(centerX, centerY) - 200; // Leave some margin
+            double spacingY = 120; // Відстань між рівнями по вертикалі
+            double spacingX = 100; // Відстань між вершинами на одному рівні
 
-            // Calculate angle for the vertex
-            double angle = (2 * Math.PI / verts.Count) * vertexNumber;
+            // Отримуємо всі вершини, які мають однаковий рівень
+            var verticesAtLevel = verts.Where(v => levels[v] == level).ToList();
+            int indexAtLevel = verticesAtLevel.IndexOf(vertexNumber); // Знаходимо індекс цієї вершини на своєму рівні
 
-            double circleX = centerX + radius * Math.Cos(angle) - 15; // Center the circle
-            double circleY = centerY + radius * Math.Sin(angle) - 15; // Center the circle
+            // Визначаємо позицію
+            double posX = indexAtLevel * spacingX; // Позиція по горизонталі, без відступу зліва
+            double posY = level * spacingY + 50; // Відстань рівня від верху Canvas
+
             Ellipse circle = new Ellipse
             {
                 Width = 30,
@@ -98,9 +143,9 @@ namespace Test
                 StrokeThickness = 2
             };
 
-            Canvas.SetLeft(circle, circleX - circle.Width / 2);
-            Canvas.SetTop(circle, circleY - circle.Height / 2);
-            vertices[vertexNumber] = new Point(circleX, circleY);
+            Canvas.SetLeft(circle, posX - circle.Width / 2);
+            Canvas.SetTop(circle, posY - circle.Height / 2);
+            vertices[vertexNumber] = new Point(posX, posY);
             circles[vertexNumber] = circle;
 
             TextBlock text = new TextBlock
@@ -109,9 +154,17 @@ namespace Test
                 FontSize = 14,
                 Foreground = Brushes.Black
             };
-            Canvas.SetLeft(text, circleX - 10);
-            Canvas.SetTop(text, circleY - 10);
+            Canvas.SetLeft(text, posX - 10);
+            Canvas.SetTop(text, posY - 10);
             numbers[vertexNumber] = text;
+        }
+
+        private void DrawVertex(int vertexNumber)
+        {
+            GraphCanvas.Children.Remove(circles[vertexNumber]);
+            GraphCanvas.Children.Add(circles[vertexNumber]);
+            GraphCanvas.Children.Remove(numbers[vertexNumber]);
+            GraphCanvas.Children.Add(numbers[vertexNumber]);
         }
 
         private void AddEdge(int vertex1, int vertex2, double weight)
