@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="545" Width="872">
     <Grid>
-        <Canvas Name="GraphCanvas" Background="White" >
+        <Canvas Name="GraphCanvas" Background="White" Margin="128,18,0,0" >
 
         </Canvas>
         <Grid Name="ShortestPathGrid" Margin="10" HorizontalAlignment="Right" VerticalAlignment="Top" Width="200">
@@ -19,9 +19,11 @@
             <TextBlock Name="PathDetailsTextBlock" Grid.Row="1"/>
 
         </Grid>
-        <Button Content="Draw Graph" Click="DrawGraphButton_Click" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,15,0,0" />
+        <Button Content="Draw Graph" Click="DrawGraphButton_Click" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="26,322,0,0" />
         <Button Content="Find Path" Click="FindPathButton_Click" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,368,0,0" RenderTransformOrigin="0.918,1.068"/>
         <Button Content="Button" Click="ShowMinCutButton_Click" Margin="10,436,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Height="27" Width="100"/>
+
+        <Button Content="Load from file" Canvas.Left="-103" Canvas.Top="-3" Click="Button_Click" Margin="10,10,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Height="27" Width="113"/>
         <TextBox  Name="InputTextBox" Width="100"  Height="277" AcceptsReturn="True" VerticalAlignment="Top" Margin="10,40,735,0" VerticalScrollBarVisibility="Visible"/>
         <TextBox Name="EndVertexTextBox" Width="100" Height="30" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,399,0,0"/>
         <StackPanel Margin="627,40,18,262">

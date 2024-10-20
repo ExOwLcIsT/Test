@@ -1,6 +1,8 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -13,7 +15,7 @@ namespace Test
         private Dictionary<int, Point> vertices = new Dictionary<int, Point>();
         private Dictionary<int, Dictionary<int, double>> graphEdges = new Dictionary<int, Dictionary<int, double>>();
         private Dictionary<int, Ellipse> circles = new Dictionary<int, Ellipse>();
-        private List<Path> edges = new List<Path>();
+        private List<System.Windows.Shapes.Path> edges = new List<System.Windows.Shapes.Path>();
 
         public MainWindow()
         {
@@ -55,8 +57,8 @@ namespace Test
         }
         private void AddVertex(int vertexNumber)
         {
-            double circleX = (GraphCanvas.ActualWidth / 4) + 50 + (vertices.Count % 5) * 100; // Вирівнювання по горизонталі
-            double circleY = (GraphCanvas.ActualHeight / 2) + (vertices.Count / 5) * 150; // Вирівнювання по вертикалі
+            double circleX = (GraphCanvas.ActualWidth / 5) + (vertices.Count % 5) * 100; // Вирівнювання по горизонталі
+            double circleY = (GraphCanvas.ActualHeight / 3) + (vertices.Count / 5) * 150; // Вирівнювання по вертикалі
 
             Ellipse circle = new Ellipse
             {
@@ -112,7 +114,7 @@ namespace Test
             double midY = (p1.Y + p2.Y) / 2;
 
             // Використання еліпсів для дуг
-            var arc = new Path();
+            var arc = new System.Windows.Shapes.Path();
             var pathFigure = new PathFigure { StartPoint = p1 };
             var arcSegment = new ArcSegment
             {
@@ -487,8 +489,23 @@ namespace Test
             }
         }
 
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog
+            {
+                Filter = "Text files (*.txt)|*.txt|All files (*.*)|*.*", // Фільтр для файлів
+                Title = "Select a text file"
+            };
 
+            // Відображаємо діалогове вікно вибору файлу
+            if (openFileDialog.ShowDialog() == true)
+            {
+                // Читання вибраного файлу та його вмісту
+                string fileContent = File.ReadAllText(openFileDialog.FileName);
 
-
+                // Заповнення текстбоксу вмістом файлу
+                InputTextBox.Text = fileContent;
+            }
+        }
     }
 }
