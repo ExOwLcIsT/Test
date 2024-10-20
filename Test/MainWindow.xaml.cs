@@ -1,12 +1,11 @@
 ﻿using Microsoft.Win32;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Media3D;
 using System.Windows.Shapes;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Test
 {
@@ -15,7 +14,9 @@ namespace Test
         private Dictionary<int, Point> vertices = new Dictionary<int, Point>();
         private Dictionary<int, Dictionary<int, double>> graphEdges = new Dictionary<int, Dictionary<int, double>>();
         private Dictionary<int, Ellipse> circles = new Dictionary<int, Ellipse>();
+        private Dictionary<int, TextBlock> numbers = new Dictionary<int, TextBlock>();
         private List<System.Windows.Shapes.Path> edges = new List<System.Windows.Shapes.Path>();
+        private HashSet<int> verts = new HashSet<int>();
 
         public MainWindow()
         {
@@ -42,7 +43,15 @@ namespace Test
                     int vertex1 = int.Parse(parts[0].Split('-')[0]);
                     int vertex2 = int.Parse(parts[0].Split('-')[1]);
                     double weight = double.Parse(parts[1]);
-
+                    verts.Add(vertex1);
+                    verts.Add(vertex2);
+                }
+                foreach (var line in lines)
+                {
+                    string[] parts = line.Split(' ');
+                    int vertex1 = int.Parse(parts[0].Split('-')[0]);
+                    int vertex2 = int.Parse(parts[0].Split('-')[1]);
+                    double weight = double.Parse(parts[1]);
                     if (!vertices.ContainsKey(vertex1))
                     {
                         AddVertex(vertex1);
@@ -52,8 +61,11 @@ namespace Test
                     {
                         AddVertex(vertex2);
                     }
-
                     AddEdge(vertex1, vertex2, weight);
+                }
+                foreach (var v in verts)
+                {
+                    DrawVertex(v);
                 }
             }
             catch (Exception ex)
@@ -61,11 +73,24 @@ namespace Test
 
             }
         }
+        private void DrawVertex(int vertexNumber)
+        {
+            GraphCanvas.Children.Remove(circles[vertexNumber]);
+            GraphCanvas.Children.Add(circles[vertexNumber]);
+            GraphCanvas.Children.Remove(numbers[vertexNumber]);
+            GraphCanvas.Children.Add(numbers[vertexNumber]);
+        }
         private void AddVertex(int vertexNumber)
         {
-            double circleX = (GraphCanvas.ActualWidth / 5) + (vertices.Count % 5) * 100; // Вирівнювання по горизонталі
-            double circleY = (GraphCanvas.ActualHeight / 3) + (vertices.Count / 5) * 150; // Вирівнювання по вертикалі
+            double centerX = GraphCanvas.ActualWidth / 2;
+            double centerY = GraphCanvas.ActualHeight / 2 + 50;
+            double radius = Math.Min(centerX, centerY) - 200; // Leave some margin
 
+            // Calculate angle for the vertex
+            double angle = (2 * Math.PI / verts.Count) * vertexNumber;
+
+            double circleX = centerX + radius * Math.Cos(angle) - 15; // Center the circle
+            double circleY = centerY + radius * Math.Sin(angle) - 15; // Center the circle
             Ellipse circle = new Ellipse
             {
                 Width = 30,
@@ -77,8 +102,6 @@ namespace Test
 
             Canvas.SetLeft(circle, circleX - circle.Width / 2);
             Canvas.SetTop(circle, circleY - circle.Height / 2);
-            GraphCanvas.Children.Add(circle);
-
             vertices[vertexNumber] = new Point(circleX, circleY);
             circles[vertexNumber] = circle;
 
@@ -90,7 +113,7 @@ namespace Test
             };
             Canvas.SetLeft(text, circleX - 10);
             Canvas.SetTop(text, circleY - 10);
-            GraphCanvas.Children.Add(text);
+            numbers[vertexNumber] = text;
         }
 
         private void AddEdge(int vertex1, int vertex2, double weight)
@@ -115,30 +138,28 @@ namespace Test
             Point p1 = vertices[vertex1];
             Point p2 = vertices[vertex2];
 
-            // Розрахунок середини між вершинами
-            double midX = (p1.X + p2.X) / 2;
-            double midY = (p1.Y + p2.Y) / 2;
+            // Calculate control points for Bezier curve
+            double controlX = (p1.X + p2.X) / 2;
+            double controlY = Math.Min(p1.Y, p2.Y) - 50; // Adjust control point to create a curve
 
-            // Використання еліпсів для дуг
-            var arc = new System.Windows.Shapes.Path();
+            var bezier = new System.Windows.Shapes.Path();
             var pathFigure = new PathFigure { StartPoint = p1 };
-            var arcSegment = new ArcSegment
+            var bezierSegment = new BezierSegment
             {
-                Point = p2,
-                Size = new Size(20, 20), // Розмір дуги
-                SweepDirection = SweepDirection.Clockwise,
-                IsLargeArc = false
+                Point1 = new Point(controlX, p1.Y),
+                Point2 = new Point(controlX, p2.Y),
+                Point3 = p2
             };
 
-            pathFigure.Segments.Add(arcSegment);
+            pathFigure.Segments.Add(bezierSegment);
             var pathGeometry = new PathGeometry();
             pathGeometry.Figures.Add(pathFigure);
-            arc.Data = pathGeometry;
-            arc.StrokeThickness = 2;
-            arc.Stroke = color ?? Brushes.Black;
+            bezier.Data = pathGeometry;
+            bezier.StrokeThickness = 2;
+            bezier.Stroke = color ?? Brushes.Black;
 
-            GraphCanvas.Children.Add(arc);
-            edges.Add(arc);
+            GraphCanvas.Children.Add(bezier);
+            edges.Add(bezier);
         }
 
         private void FindPathButton_Click(object sender, RoutedEventArgs e)
@@ -181,6 +202,10 @@ namespace Test
                     DrawEdge((int)previous, (int)current, Brushes.Red);
                 }
 
+                foreach (var v in verts)
+                {
+                    DrawVertex(v);
+                }
                 current = previous;
             }
         }
@@ -443,11 +468,15 @@ namespace Test
                     int current = int.Parse(item.Split("-")[1]);
                     DrawEdge(previous, current, Brushes.Magenta);
                 }
+                foreach (var v in verts)
+                {
+                    DrawVertex(v);
+                }
                 _ = min_r;
 
             }
             catch (Exception ex)
-            {               
+            {
                 MessageBox.Show($"Помилка: {ex.Message}");
             }
         }
@@ -473,23 +502,6 @@ namespace Test
 
             return visited;
         }
-
-        private void HighlightMinCutEdges(List<(int, int)> minCutEdges)
-        {
-            DrawGraph(); // Очищення графу
-
-            foreach (var circle in circles)
-            {
-                circle.Value.Fill = Brushes.LightBlue; // Скидання кольору вершин
-            }
-
-            // Виділення дуг, що входять до мінімального перерізу
-            foreach (var edge in minCutEdges)
-            {
-                DrawEdge(edge.Item1, edge.Item2, Brushes.Green); // Виділяємо зеленим кольором
-            }
-        }
-
         private void Button_Click(object sender, RoutedEventArgs e)
         {
             OpenFileDialog openFileDialog = new OpenFileDialog
