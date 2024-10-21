@@ -124,14 +124,14 @@ namespace Test
         private void AddVertex(int vertexNumber, int level)
         {
             double spacingY = 100; // Відстань між рівнями по вертикалі
-            double spacingX = 100; // Відстань між вершинами на одному рівні
+            double spacingX = 75; // Відстань між вершинами на одному рівні
 
             // Отримуємо всі вершини, які мають однаковий рівень
             var verticesAtLevel = verts.Where(v => levels[v] == level).ToList();
             int indexAtLevel = verticesAtLevel.IndexOf(vertexNumber); // Знаходимо індекс цієї вершини на своєму рівні
 
             // Визначаємо позицію
-            double posX = indexAtLevel * spacingX; // Позиція по горизонталі, без відступу зліва
+            double posX = indexAtLevel * spacingX + spacingX; // Позиція по горизонталі, без відступу зліва
             double posY = level * spacingY + 50; // Відстань рівня від верху Canvas
 
             Ellipse circle = new Ellipse
@@ -310,8 +310,20 @@ namespace Test
         }
         private (List<string> path, int length, Dictionary<int, int?> previousVertices) CalculateShortestPath(int n)
         {
-            List<string> ar = new List<string>();
-            Dictionary<string, int> dictionary = new Dictionary<string, int>();
+            string[] lines = InputTextBox.Text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            Dictionary<string, int> edges = new();
+            foreach (var line in lines)
+            {
+                string[] parts = line.Split(' ');
+                string key = parts[0];
+                int weight = int.Parse(parts[1]);
+                if (edges.ContainsKey(key))
+                {
+                    edges[key] = Math.Min(weight, edges[key]);
+                }
+                else
+                    edges[key] = weight;
+            }
             Dictionary<int, int> H_dic = new Dictionary<int, int>();
             Dictionary<int, int?> previousVertices = new Dictionary<int, int?>();
 
@@ -324,16 +336,6 @@ namespace Test
 
             // Distance from start vertex (1) to itself is 0
             H_dic[1] = 0; // Start vertex distance to itself is 0
-
-            // Simulate the input data
-            foreach (var edge in graphEdges)
-            {
-                foreach (var target in edge.Value)
-                {
-                    string key = $"{edge.Key}-{target.Key}";
-                    dictionary[key] = (int)target.Value; // Assuming weight is an int
-                }
-            }
 
             List<int> start = new List<int> { 1 }; // Start from vertex 1
             List<int> end = new List<int>();
@@ -348,7 +350,7 @@ namespace Test
                 List<int> x = new List<int>();
                 List<string> our_key = new List<string>();
 
-                foreach (string i in dictionary.Keys)
+                foreach (string i in edges.Keys)
                 {
                     string[] el = i.Split('-');
                     int el1 = int.Parse(el[0]);
@@ -358,7 +360,7 @@ namespace Test
                     {
                         our_key.Add(i);
                         int sum = H_dic[el1];
-                        x.Add(dictionary[i] + sum);
+                        x.Add(edges[i] + sum);
                     }
                 }
 
@@ -456,356 +458,7 @@ namespace Test
                 int last_el = 0;
                 List<int> g = new List<int>();
 
-                foreach (var i in dictionary)
-                {
-                    var parts = i.Key.Split("-");
-                    int el1 = int.Parse(parts[0]);
-                    int el2 = int.Parse(parts[1]);
-                    if (el2 == n)
-                    {
-                        possible_ways.Add(i.Key);
-                        if (el1 != 1)
-                        {
-                            g.Add(el1);
-                        }
-                    }
 
-                    if (el2 > last_el)
-                    {
-                        last_el = el2;
-                    }
-                }
-
-                string skip_way = "";
-
-                while (!status)
-                {
-                    if (string.IsNullOrEmpty(skip_way))
-                    {
-                        t.Clear();
-                    }
-                    max_val.Clear();
-                    List<string> repeated = new List<string>();
-                    bool second_cicle = false;
-
-                    while (start != n)
-                    {
-                        List<int> x = new List<int>();
-                        our_key.Clear();
-
-                        foreach (var i in dictionary)
-                        {
-                            var parts = i.Key.Split("-");
-                            int el1 = int.Parse(parts[0]);
-                            int el2 = int.Parse(parts[1]);
-
-                            if (pos_w)
-                            {
-                                break;
-                            }
-
-                            if (start == el1)
-                            {
-                                if (repeated.Contains(i.Key))
-                                {
-                                    if (H_dic[el1] - H_Bad_dic[el1] != 1)
-                                    {
-                                        skip_way = t[t.IndexOf(i.Key)];
-                                    }
-                                    else
-                                    {
-                                        skip_way = t[t.IndexOf(i.Key) + 1];
-                                        t.RemoveRange(t.IndexOf(i.Key) + 1, t.Count - t.IndexOf(i.Key) - 1);
-                                        start = el2;
-                                        second_cicle = true;
-                                        break;
-                                    }
-                                }
-
-                                if (n != last_el && (el2 == g[g.Count - 1] || (possible_ways.Contains(i.Key) && !remember.Contains(i.Key))))
-                                {
-                                    if (possible_ways.Contains(i.Key))
-                                    {
-                                        completed.Add(i.Key);
-                                    }
-                                    our_key.Clear();
-                                    our_key.Add(i.Key);
-                                    x.Clear();
-                                    int sub = dictionary[i.Key] - inverse[i.Key];
-                                    x.Add(sub);
-                                    pos_w = true;
-                                    break;
-                                }
-
-                                if (!st.Contains(el2) && i.Key != skip_way)
-                                {
-                                    our_key.Add(i.Key);
-                                    int sub = dictionary[i.Key] - inverse[i.Key];
-
-                                    if (sub == 0)
-                                    {
-                                        bad.Add(t);
-                                        if (!r.Contains(i.Key))
-                                        {
-                                            r.Add(i.Key);
-                                        }
-                                    }
-
-                                    x.Add(sub);
-                                }
-                            }
-                        }
-                        pos_w = false;
-
-                        if (x.Count == 0)
-                        {
-                            break;
-                        }
-                        if (x.Max() == 0)
-                        {
-                            break;
-                        }
-
-                        max_val.Add(x.Max());
-                        int ind = x.IndexOf(x.Max());
-                        t.Add(our_key[ind]);
-                        repeated.Add(our_key[ind]);
-
-                        var el_parts = our_key[ind].Split("-");
-                        int el1_new = int.Parse(el_parts[0]);
-                        int el2_new = int.Parse(el_parts[1]);
-                        start = el2_new;
-                    }
-
-                    if (!second_cicle)
-                    {
-                        skip_way = "";
-                        int min_val = max_val.Min();
-                        ways.Add(new List<string>(t));
-                        min_r.Add(min_val);
-
-                        foreach (var i in t)
-                        {
-                            inverse[i] += min_val;
-                        }
-
-                        foreach (var i in dictionary)
-                        {
-                            int sub = dictionary[i.Key] - inverse[i.Key];
-
-                            if (sub == 0)
-                            {
-                                bad.Add(t);
-                                if (!r.Contains(i.Key))
-                                {
-                                    r.Add(i.Key);
-                                }
-                            }
-                        }
-
-                        int count = 0;
-                        foreach (var i in possible_ways)
-                        {
-                            foreach (var j in r)
-                            {
-                                if (i == j)
-                                {
-                                    count++;
-                                    if (!remember.Contains(i))
-                                    {
-                                        remember.Add(i);
-                                    }
-                                }
-                            }
-                        }
-                        var firstNotSecond = completed.Except(possible_ways).ToList();
-                        var secondNotFirst = possible_ways.Except(completed).ToList();
-                        if ((!firstNotSecond.Any() && !secondNotFirst.Any()) || count == possible_ways.Count)
-                        {
-                            status = true;
-                            break;
-                        }
-
-                        start = 1;
-                        int n1 = 1;
-                        while (n1 != last_el + 1)
-                        {
-                            int k1 = 0;
-                            foreach (var i in dictionary)
-                            {
-                                var parts = i.Key.Split("-");
-                                int el1 = int.Parse(parts[0]);
-                                int el2 = int.Parse(parts[1]);
-                                if (el1 == n1)
-                                {
-                                    k1++;
-                                }
-                            }
-                            H_dic[n1] = k1;
-                            n1++;
-                        }
-
-                        for (int i = 1; i <= last_el; i++)
-                        {
-                            H_Bad_dic[i] = 0;
-                        }
-
-                        foreach (var i in dictionary)
-                        {
-                            if (r.Contains(i.Key))
-                            {
-                                var el_parts = i.Key.Split("-");
-                                int el1 = int.Parse(el_parts[0]);
-                                H_Bad_dic[el1]++;
-                            }
-                        }
-
-                        int numb = 0;
-                        List<int> check = new List<int>();
-                        foreach (var i in r)
-                        {
-                            var el_parts = i.Split("-");
-                            int el1 = int.Parse(el_parts[0]);
-                            int el2 = int.Parse(el_parts[1]);
-                            if (g.Contains(el1))
-                            {
-                                g.Remove(el1);
-                            }
-                            if (g.Contains(el2))
-                            {
-                                g.Remove(el2);
-                            }
-                            foreach (var j in dictionary)
-                            {
-                                var el_1_parts = j.Key.Split("-");
-                                int el_1 = int.Parse(el_1_parts[0]);
-                                int el_2 = int.Parse(el_1_parts[1]);
-                                if (el1 == el_2)
-                                {
-                                    numb++;
-                                    if (!check.Contains(el_1))
-                                    {
-                                        check.Add(el_1);
-                                    }
-                                }
-                            }
-                        }
-
-                        bool need_to_stop = false;
-                        if (check.Contains(1))
-                        {
-                            check.Remove(1);
-                        }
-                        if (check.Count == 0)
-                        {
-                            need_to_stop = true;
-                        }
-                        while (!need_to_stop)
-                        {
-                            var toRemove = new List<int>(); // List to store items to remove
-
-                            foreach (var i in new List<int>(check)) // Iterate over a copy of check
-                            {
-                                foreach (var j in dictionary)
-                                {
-                                    var el_1_parts = j.Key.Split("-");
-                                    int el_1 = int.Parse(el_1_parts[0]);
-                                    int el_2 = int.Parse(el_1_parts[1]);
-                                    if (i == el_2)
-                                    {
-                                        numb++;
-                                        if (!check.Contains(el_1))
-                                        {
-                                            check.Add(el_1);
-                                        }
-                                    }
-                                }
-                                toRemove.Add(i); // Add to remove list
-                            }
-
-                            // Now remove items from check
-                            foreach (var item in toRemove)
-                            {
-                                check.Remove(item);
-                            }
-
-                            if (check.Contains(1))
-                            {
-                                need_to_stop = true;
-                            }
-                        }
-
-                        bool one_cicle = false;
-                        st.Clear();
-                        List<int> use = new List<int>();
-
-                        if (numb == 0)
-                        {
-                            numb = 2;
-                        }
-
-                        for (int k = 0; k < numb; k++)
-                        {
-                            if (status)
-                            {
-                                break;
-                            }
-                            if (one_cicle)
-                            {
-                                foreach (var i in dictionary)
-                                {
-                                    var el1_parts = i.Key.Split("-");
-                                    int el1 = int.Parse(el1_parts[0]);
-                                    int el2 = int.Parse(el1_parts[1]);
-                                    if (H_Bad_dic[el2] == H_dic[el2] && H_Bad_dic[el2] != 0 && !st.Contains(el2) && !r.Contains(i.Key))
-                                    {
-                                        H_Bad_dic[el1]++;
-                                        if (!st.Contains(el2))
-                                        {
-                                            st.Add(el2);
-                                        }
-                                        if (!use.Contains(el1))
-                                        {
-                                            use.Add(el1);
-                                        }
-                                    }
-                                }
-                            }
-
-                            foreach (var i in dictionary)
-                            {
-                                var el1_parts = i.Key.Split("-");
-                                int el1 = int.Parse(el1_parts[0]);
-                                int el2 = int.Parse(el1_parts[1]);
-                                if (H_Bad_dic[el2] == H_dic[el2] && H_Bad_dic[el2] != 0 && !use.Contains(el1) && !r.Contains(i.Key))
-                                {
-                                    H_Bad_dic[el1]++;
-                                    if (!st.Contains(el2))
-                                    {
-                                        st.Add(el2);
-                                    }
-                                    if (!use.Contains(el1))
-                                    {
-                                        use.Add(el1);
-                                    }
-                                }
-                                if (H_Bad_dic[1] == H_dic[1] && H_Bad_dic[1] != 0)
-                                {
-                                    status = true;
-                                    break;
-                                }
-                                if (H_Bad_dic[n] == H_dic[n] && H_Bad_dic[n] != 0)
-                                {
-                                    status = true;
-                                    break;
-                                }
-                            }
-
-                            one_cicle = true;
-                            need_to_continue = false;
-                        }
-                    }
-                }
                 DrawGraph();
                 foreach (var item in r)
                 {
@@ -819,7 +472,7 @@ namespace Test
                 }
                 MinimumCrossSection.Text = "Максимальний потік: " + min_r.Sum() + "\n";
                 MinimumCrossSection.Text += "Мінімальні перерізи: \n";
-                foreach (var v in ways)
+                foreach (var v in r)
                 {
                     MinimumCrossSection.Text += string.Join(", ", v) + "\n";
                 }
