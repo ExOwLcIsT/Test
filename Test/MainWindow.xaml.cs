@@ -211,22 +211,73 @@ namespace Test
 
             GraphCanvas.Children.Add(bezier);
             edges.Add(bezier);
+
+            // Calculate a point on the curve closer to the start (e.g., 10% of the way from start)
+            Point arrowPosition = GetBezierPoint(bezierSegment, 0.6); // Point closer to the start (10% of the way)
+
+            // Calculate direction vector for the arrow
+            Vector direction = arrowPosition - p1; // Direction from start to arrow position
+            direction.Normalize();
+
+            // Draw arrow
+            DrawArrow(arrowPosition, direction, color ?? Brushes.Black);
         }
 
+        // Метод для визначення точки на кривій Безьє на основі параметра t
+        private Point GetBezierPoint(BezierSegment bezierSegment, double t)
+        {
+            double x = Math.Pow(1 - t, 2) * bezierSegment.Point1.X
+                       + 2 * (1 - t) * t * bezierSegment.Point2.X
+                       + Math.Pow(t, 2) * bezierSegment.Point3.X;
+
+            double y = Math.Pow(1 - t, 2) * bezierSegment.Point1.Y
+                       + 2 * (1 - t) * t * bezierSegment.Point2.Y
+                       + Math.Pow(t, 2) * bezierSegment.Point3.Y;
+
+            return new Point(x, y);
+        }
+
+        private void DrawArrow(Point position, Vector direction, Brush color)
+        {
+            // Довжина стрілки
+            double arrowLength = 6;
+            double arrowWidth = 6;
+
+            // Розрахунок точок трикутника для стрілки
+            Point arrowTip = position;
+            Point basePoint1 = new Point(
+                arrowTip.X - arrowLength * direction.X + arrowWidth * direction.Y,
+                arrowTip.Y - arrowLength * direction.Y - arrowWidth * direction.X
+            );
+            Point basePoint2 = new Point(
+                arrowTip.X - arrowLength * direction.X - arrowWidth * direction.Y,
+                arrowTip.Y - arrowLength * direction.Y + arrowWidth * direction.X
+            );
+
+            // Створюємо трикутник для стрілки
+            var arrowHead = new Polygon
+            {
+                Points = new PointCollection { arrowTip, basePoint1, basePoint2 },
+                Fill = color
+            };
+
+            // Додаємо стрілку на Canvas
+            GraphCanvas.Children.Add(arrowHead);
+        }
         private void FindPathButton_Click(object sender, RoutedEventArgs e)
         {
             if (int.TryParse(EndVertexTextBox.Text, out int endVertex))
             {
                 var result = CalculateShortestPath(endVertex);
 
-                PathLengthTextBlock.Text = $"Shortest Path: {string.Join(" -> ", result.path)}";
-                TotalLengthTextBlock.Text = $"Total Length: {result.length}";
+                PathLengthTextBlock.Text = $"Найкоротший шлях: {string.Join(" -> ", result.path)}";
+                TotalLengthTextBlock.Text = $"Довжина найкоротшого шляху: {result.length}";
 
                 HighlightShortestPath(endVertex, result.previousVertices);
             }
             else
             {
-                MessageBox.Show("Invalid vertex. Please enter a valid integer.");
+                MessageBox.Show("Неправильна вершина. Будь ласка, введіть правильне ціле число.");
             }
         }
 
@@ -755,7 +806,6 @@ namespace Test
                         }
                     }
                 }
-                Console.WriteLine("Ways");
                 DrawGraph();
                 foreach (var item in r)
                 {
@@ -767,7 +817,12 @@ namespace Test
                 {
                     DrawVertex(v);
                 }
-                MinimumCrossSection.Text = "Максимальний потік: " + min_r.Sum();
+                MinimumCrossSection.Text = "Максимальний потік: " + min_r.Sum() + "\n";
+                MinimumCrossSection.Text += "Мінімальні перерізи: \n";
+                foreach (var v in ways)
+                {
+                    MinimumCrossSection.Text += string.Join(", ", v) + "\n";
+                }
             }
             catch { MessageBox.Show("Сталася помилка"); }
         }

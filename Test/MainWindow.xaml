@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Test"
         mc:Ignorable="d"
-        Title="MainWindow" Height="623" Width="922" MinWidth="922" MinHeight="623">
+        Title="MainWindow" Height="623" Width="1001" MinWidth="922" MinHeight="623">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="145*"/>
@@ -26,12 +26,14 @@
 
         </Grid>
         <StackPanel Margin="0,0,744,0" Grid.ColumnSpan="2" MinWidth="120">
-            <Button Content="Load from file" Click="Button_Click"  HorizontalAlignment="Left" VerticalAlignment="Top" Height="27" Width="113" Margin="10"/>
+            <Button Content="Завантажити з файлу" Click="Button_Click"  HorizontalAlignment="Left" Height="27" Width="137" Margin="10"/>
             <TextBox x:Name="InputTextBox" AcceptsReturn="True"  Width="100" Height="300" VerticalAlignment="Top" HorizontalAlignment="Left" VerticalScrollBarVisibility="Visible"/>
-            <Button Content="Draw Graph" Click="DrawGraphButton_Click" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10"/>
+            <Button Content="Намалювати граф" Click="DrawGraphButton_Click" HorizontalAlignment="Left" Margin="10" Width="115"/>
             <TextBox Name="EndVertexTextBox" Width="100" Height="30" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10"/>
-            <Button Content="Find Path" Click="FindPathButton_Click" HorizontalAlignment="Left" VerticalAlignment="Top"  RenderTransformOrigin="0.918,1.068" Margin="10"/>
-            <Button Content="Find maximum flow" Click="ShowMinCutButton_Click"  HorizontalAlignment="Left" VerticalAlignment="Top" Height="27" Width="100" Margin="10"/>
+            <Button Content="Знайти шлях" Click="FindPathButton_Click" HorizontalAlignment="Left"  RenderTransformOrigin="0.918,1.068" Margin="10" Width="100"/>
+            <Button  Click="ShowMinCutButton_Click"  HorizontalAlignment="Left" Height="41" Width="119" Margin="10"  >
+                <TextBlock TextWrapping="Wrap">Знайти максимальний потік</TextBlock>
+            </Button>
         </StackPanel>
         <StackPanel Margin="511,40,18,262" Grid.Column="1">
             <TextBlock x:Name="PathLengthTextBlock" FontSize="14" Foreground="Black" Height="59" TextWrapping="Wrap" Margin="10"/>
