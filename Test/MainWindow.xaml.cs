@@ -15,7 +15,7 @@ namespace Test
         private Dictionary<int, Ellipse> circles = new Dictionary<int, Ellipse>();
         private Dictionary<int, TextBlock> numbers = new Dictionary<int, TextBlock>();
         private List<System.Windows.Shapes.Path> edges = new List<System.Windows.Shapes.Path>();
-        private HashSet<int> verts = new HashSet<int>();
+        private HashSet<int> verts = new HashSet<int>([1]);
         Dictionary<int, int> levels = new Dictionary<int, int>();
 
         public MainWindow()
@@ -39,6 +39,7 @@ namespace Test
                 // Парсинг введених даних для графу
                 string[] lines = InputTextBox.Text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
                 Dictionary<int, List<int>> adjacencyList = new Dictionary<int, List<int>>();
+                adjacencyList[1] = new List<int>();
                 foreach (var line in lines)
                 {
                     string[] parts = line.Split(' ');
@@ -82,7 +83,7 @@ namespace Test
             }
             catch (Exception ex)
             {
-                // Обробка винятків
+                MessageBox.Show(ex.Message);
             }
         }
 
@@ -98,6 +99,7 @@ namespace Test
             levels[startVertex] = 0;
             visited.Add(startVertex);
 
+            // Основний обхід BFS
             while (queue.Count > 0)
             {
                 int vertex = queue.Dequeue();
@@ -114,6 +116,16 @@ namespace Test
                             queue.Enqueue(neighbor);
                         }
                     }
+                }
+            }
+
+            // Визначаємо рівні для вершин, які не мають вихідних дуг
+            int maxLevel = levels.Values.Count > 0 ? levels.Values.Max() : 0;
+            foreach (var vertex in verts)
+            {
+                if (!levels.ContainsKey(vertex))
+                {
+                    levels[vertex] = maxLevel + 1; // Встановлюємо найнижчий рівень
                 }
             }
 
@@ -364,7 +376,7 @@ namespace Test
                     }
                 }
 
-                if (x.Count == 0) break; // Prevent errors if no edges are found
+                if (x.Count == 0) break;
 
                 int min_val = int.MaxValue;
                 int ind = -1;
@@ -409,11 +421,110 @@ namespace Test
             {
                 List<string> ar = new List<string>();
                 Dictionary<string, int> dictionary = new Dictionary<string, int>();
-                Dictionary<string, int> inverse = new Dictionary<string, int>();
+                Dictionary<List<string>, int> ways = new();
+                Dictionary<string, int> r = new();
 
-                Dictionary<int, int> H_dic = new Dictionary<int, int>();
-                Dictionary<int, int> H_Bad_dic = new Dictionary<int, int>();
+                // Зберігаємо всі можливі шляхи до n
+                List<List<string>> allPaths;
+                List<int> pathWeights;
+                int sum = 0;
+                // Функція для пошуку всіх шляхів
+                void DFS(string currentVertex, string targetVertex, List<string> path, HashSet<string> visited, int currentMinWeight)
+                {
+                    // Додаємо поточну вершину до шляху
+                    path.Add(currentVertex);
+                    visited.Add(currentVertex);
 
+                    // Якщо досягли кінцевої вершини, зберігаємо шлях і мінімальну вагу
+                    if (currentVertex == targetVertex)
+                    {
+                        allPaths.Add(new List<string>(path));
+                        pathWeights.Add(currentMinWeight);  // Зберігаємо мінімальну вагу ребра на шляху
+                    }
+                    else
+                    {
+                        // Ітеруємо всі ребра, які починаються з поточної вершини
+                        foreach (var edge in dictionary)
+                        {
+                            var parts = edge.Key.Split("-");
+                            string from = parts[0];
+                            string to = parts[1];
+
+                            // Якщо поточна вершина є початковою в ребрі та кінцева ще не відвідана
+                            if (from == currentVertex && !visited.Contains(to))
+                            {
+                                int edgeWeight = edge.Value;
+                                // Оновлюємо мінімальну вагу
+                                int newMinWeight = Math.Min(currentMinWeight, edgeWeight);
+
+                                // Викликаємо DFS для наступної вершини
+                                DFS(to, targetVertex, path, visited, newMinWeight);
+                            }
+                        }
+                    }
+
+                    // Вихід з вершини - видаляємо її зі шляху та списку відвіданих
+                    path.RemoveAt(path.Count - 1);
+                    visited.Remove(currentVertex);
+                }
+
+                void ProcessPaths(int targetVertex)
+                {
+                    // Виконуємо цикл доти, доки є можливість знайти шлях до n
+                    while (true)
+                    {
+                        // Очищаємо списки для зберігання шляхів та мінімальних ваг
+                        allPaths = new List<List<string>>();
+                        pathWeights = new List<int>();
+
+                        // Пошук всіх шляхів від вершини "1" до вершини "n"
+                        List<string> path = new List<string>();
+                        HashSet<string> visited = new HashSet<string>();
+
+                        // Початкове значення мінімальної ваги - максимальне можливе значення
+                        int initialMinWeight = int.MaxValue;
+
+                        // Викликаємо DFS для початкової вершини "1" та цільової вершини n
+                        DFS("1", targetVertex.ToString(), path, visited, initialMinWeight);
+
+                        // Якщо не знайдено жодного шляху, виходимо з циклу
+                        if (allPaths.Count == 0)
+                        {
+                            break;
+                        }
+
+                        // Знаходимо індекс шляху з найбільшою мінімальною вагою
+                        int maxWeight = pathWeights.Max();
+                        int indexMaxWeightPath = pathWeights.IndexOf(maxWeight);
+
+                        // Отримуємо шлях із найбільшою мінімальною вагою
+                        List<string> maxWeightPath = allPaths[indexMaxWeightPath];
+                        sum += maxWeight;
+                        // Виводимо шлях із найбільшою мінімальною вагою та її значення
+                        ways.Add(maxWeightPath, maxWeight);
+
+                        // Оновлюємо ваги ребер у цьому шляху, віднімаючи від них найбільшу вагу
+                        for (int i = 0; i < maxWeightPath.Count - 1; i++)
+                        {
+                            string from = maxWeightPath[i];
+                            string to = maxWeightPath[i + 1];
+                            string edgeKey = from + "-" + to;
+
+                            if (dictionary.ContainsKey(edgeKey))
+                            {
+                                // Віднімаємо найбільшу вагу від ребра
+                                dictionary[edgeKey] -= maxWeight;
+
+                                // Якщо вага стає 0 або меншою, видаляємо ребро
+                                if (dictionary[edgeKey] <= 0)
+                                {
+                                    r.Add(edgeKey, dictionary[edgeKey]);
+                                    dictionary.Remove(edgeKey);
+                                }
+                            }
+                        }
+                    }
+                }
 
                 string[] lines = InputTextBox.Text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
                 foreach (var line in lines)
@@ -421,63 +532,42 @@ namespace Test
                     ar.Add(line);
                 }
 
+                // Зберігаємо ребра у форматі "початок-кінець вага"
                 foreach (var i in ar)
                 {
-                    Console.WriteLine(i);
                     var parts = i.Split(" ");
                     string key = parts[0];
                     int value = int.Parse(parts[1]);
                     dictionary[key] = value;
-                    inverse[key] = 0;
                 }
 
+                // Зчитуємо кінцеву вершину (наприклад, кінцева вершина - 8)
                 int n = int.Parse(EndVertexTextBox.Text);
-
-                List<int> result = new List<int>();
-                List<string> our_key = new List<string>();
-
-                int start = 1;
-                List<string> t = new List<string>();
-                List<int> max_val = new List<int>();
-                List<string> r = new List<string>();
-                bool status = false;
-                List<List<string>> ways = new List<List<string>>();
-                List<List<string>> bad = new List<List<string>>();
-
-                H_dic.Clear();
-                H_Bad_dic.Clear();
-
-                List<int> st = new List<int>();
-                List<int> min_r = new List<int>();
-                bool need_to_continue = false;
-
-                List<string> completed = new List<string>();
-                List<string> possible_ways = new List<string>();
-                List<string> remember = new List<string>();
-                bool pos_w = false;
-                int last_el = 0;
-                List<int> g = new List<int>();
-
+                if (!verts.Contains(n))
+                {
+                    throw new Exception("Wrong input, must contain vertice from graph");
+                }
+                // Запускаємо процес пошуку шляхів і зміни ваг
+                ProcessPaths(n);
+                MinimumCrossSection.Text = ("Min-cuts:\n");
 
                 DrawGraph();
-                foreach (var item in r)
+                foreach (var i in r)
                 {
-                    int previous = int.Parse(item.Split("-")[0]);
-                    int current = int.Parse(item.Split("-")[1]);
+                    int previous = int.Parse(i.Key.Split("-")[0]);
+                    int current = int.Parse(i.Key.Split("-")[1]);
                     DrawEdge(previous, current, Brushes.Magenta);
+                    MinimumCrossSection.Text += (string.Join(", ", i.Key) + " : " + i.Value + "\n");
                 }
+                MinimumCrossSection.Text += ($"Maximum flow: {sum}");
+
                 foreach (var v in verts)
                 {
                     DrawVertex(v);
                 }
-                MinimumCrossSection.Text = "Максимальний потік: " + min_r.Sum() + "\n";
-                MinimumCrossSection.Text += "Мінімальні перерізи: \n";
-                foreach (var v in r)
-                {
-                    MinimumCrossSection.Text += string.Join(", ", v) + "\n";
-                }
+
             }
-            catch { MessageBox.Show("Сталася помилка"); }
+            catch (Exception ex) { MessageBox.Show($"Error: {ex.Message}"); }
         }
         private HashSet<int> GetReachableVertices(int source)
         {
