@@ -28,11 +28,19 @@
         </Grid>
         <StackPanel  Grid.Column="0" MinWidth="120">
             <Button Content="Load from file" Click="Button_Click"  HorizontalAlignment="Left" Height="27" Width="137" Margin="10"/>
-            <TextBox x:Name="InputTextBox" AcceptsReturn="True"  Width="169" Height="300" HorizontalAlignment="Left" VerticalScrollBarVisibility="Visible"/>
+            <TextBox x:Name="InputTextBox" AcceptsReturn="True"  Width="177" Height="300" VerticalScrollBarVisibility="Visible" >
+                <TextBox.ToolTip>
+                    <TextBlock>
+                   Enter your graph here, for example: <LineBreak/>
+                    1-2 2<LineBreak/>
+                    2-3 4<LineBreak/>
+                    </TextBlock>
+                </TextBox.ToolTip>
+            </TextBox>
             <Button Content="Draw the graph" Click="DrawGraphButton_Click" HorizontalAlignment="Left" Margin="10" Width="115"/>
-            <TextBox Name="EndVertexTextBox" Width="100" Height="30" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10"/>
-            <Button Content="Find the shortest path" Click="FindPathButton_Click" HorizontalAlignment="Left"  RenderTransformOrigin="0.918,1.068" Margin="10" Width="118" Height="44"/>
-            <Button  Click="ShowMinCutButton_Click"  HorizontalAlignment="Left" Height="41" Width="119" Margin="10"  >
+            <TextBox Name="EndVertexTextBox" ToolTip="Here you have to enter vertex, you want to find shortest path to, or the max-flow to it" Width="100" Height="30" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10" />
+            <Button Content="Find the shortest path" Click="FindPathButton_Click" HorizontalAlignment="Left"  RenderTransformOrigin="0.918,1.068" Margin="10" Width="162" Height="44"/>
+            <Button  Click="ShowMinCutButton_Click"  HorizontalAlignment="Left" Height="41" Width="162" Margin="10"  >
                 <TextBlock TextWrapping="Wrap">Find the maximum flow</TextBlock>
             </Button>
         </StackPanel>

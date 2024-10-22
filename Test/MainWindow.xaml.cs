@@ -1,4 +1,6 @@
 ﻿using Microsoft.Win32;
+using System.ComponentModel;
+using System.Diagnostics.Eventing.Reader;
 using System.IO;
 using System.Linq;
 using System.Windows;
@@ -15,7 +17,7 @@ namespace Test
         private Dictionary<int, Ellipse> circles = new Dictionary<int, Ellipse>();
         private Dictionary<int, TextBlock> numbers = new Dictionary<int, TextBlock>();
         private List<System.Windows.Shapes.Path> edges = new List<System.Windows.Shapes.Path>();
-        private HashSet<int> verts = new HashSet<int>([1]);
+        private HashSet<int> verts = new HashSet<int>();
         Dictionary<int, int> levels = new Dictionary<int, int>();
 
         public MainWindow()
@@ -34,26 +36,31 @@ namespace Test
             graphEdges.Clear();
             circles.Clear();
             edges.Clear();
+            verts.Clear();
+            verts.Add(1);
             try
             {
                 // Парсинг введених даних для графу
                 string[] lines = InputTextBox.Text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
                 Dictionary<int, List<int>> adjacencyList = new Dictionary<int, List<int>>();
                 adjacencyList[1] = new List<int>();
-                foreach (var line in lines)
+                try
                 {
-                    string[] parts = line.Split(' ');
-                    int vertex1 = int.Parse(parts[0].Split('-')[0]);
-                    int vertex2 = int.Parse(parts[0].Split('-')[1]);
-                    double weight = double.Parse(parts[1]);
-                    verts.Add(vertex1);
-                    verts.Add(vertex2);
+                    foreach (var line in lines)
+                    {
+                        string[] parts = line.Split(' ');
+                        int vertex1 = int.Parse(parts[0].Split('-')[0]);
+                        int vertex2 = int.Parse(parts[0].Split('-')[1]);
+                        double weight = double.Parse(parts[1]);
+                        verts.Add(vertex1);
+                        verts.Add(vertex2);
 
-                    if (!adjacencyList.ContainsKey(vertex1))
-                        adjacencyList[vertex1] = new List<int>();
-                    adjacencyList[vertex1].Add(vertex2);
+                        if (!adjacencyList.ContainsKey(vertex1))
+                            adjacencyList[vertex1] = new List<int>();
+                        adjacencyList[vertex1].Add(vertex2);
+                    }
                 }
-
+                catch { throw new Exception("Wrong input!\nExample for input:\n1-2 5\n2-3 4\nInput must contain only integer values and '-' sign"); }
                 // Алгоритм BFS для визначення рівнів
                 Dictionary<int, int> vertexLevels = GetVertexLevels(adjacencyList);
 
@@ -278,18 +285,23 @@ namespace Test
         }
         private void FindPathButton_Click(object sender, RoutedEventArgs e)
         {
-            if (int.TryParse(EndVertexTextBox.Text, out int endVertex))
+            try
             {
+                var endVertex = int.Parse(EndVertexTextBox.Text);
+                if (!verts.Contains(endVertex))
+                {
+                    throw new Exception();
+                }
                 var result = CalculateShortestPath(endVertex);
 
-                PathLengthTextBlock.Text = $"Найкоротший шлях: {string.Join(" -> ", result.path)}";
-                TotalLengthTextBlock.Text = $"Довжина найкоротшого шляху: {result.length}";
+                PathLengthTextBlock.Text = $"Shortest way: {string.Join(" -> ", result.path)}";
+                TotalLengthTextBlock.Text = $"Shortest way length: {result.length}";
 
                 HighlightShortestPath(endVertex, result.previousVertices);
             }
-            else
+            catch
             {
-                MessageBox.Show("Неправильна вершина. Будь ласка, введіть правильне ціле число.");
+                MessageBox.Show("Wrong input of vertice");
             }
         }
 
@@ -470,6 +482,11 @@ namespace Test
 
                 void ProcessPaths(int targetVertex)
                 {
+                    if (targetVertex == 1)
+                    {
+
+                        return;
+                    }
                     // Виконуємо цикл доти, доки є можливість знайти шлях до n
                     while (true)
                     {
@@ -542,24 +559,40 @@ namespace Test
                 }
 
                 // Зчитуємо кінцеву вершину (наприклад, кінцева вершина - 8)
-                int n = int.Parse(EndVertexTextBox.Text);
-                if (!verts.Contains(n))
+                if (int.TryParse(EndVertexTextBox.Text, out int n))
+                {
+                    if (!verts.Contains(n))
+                    {
+                        throw new Exception("Wrong input, must contain vertice from graph");
+                    }
+                }
+                else
                 {
                     throw new Exception("Wrong input, must contain vertice from graph");
                 }
                 // Запускаємо процес пошуку шляхів і зміни ваг
                 ProcessPaths(n);
-                MinimumCrossSection.Text = ("Min-cuts:\n");
-
-                DrawGraph();
-                foreach (var i in r)
+                if (r.Count > 0)
                 {
-                    int previous = int.Parse(i.Key.Split("-")[0]);
-                    int current = int.Parse(i.Key.Split("-")[1]);
-                    DrawEdge(previous, current, Brushes.Magenta);
-                    MinimumCrossSection.Text += (string.Join(", ", i.Key) + " : " + i.Value + "\n");
+                    MinimumCrossSection.Text = ("Min-cuts:\n");
+
+                    DrawGraph();
+                    foreach (var i in r)
+                    {
+                        int previous = int.Parse(i.Key.Split("-")[0]);
+                        int current = int.Parse(i.Key.Split("-")[1]);
+                        DrawEdge(previous, current, Brushes.Magenta);
+                        MinimumCrossSection.Text += (string.Join(", ", i.Key) + " : " + i.Value + "\n");
+                    }
                 }
-                MinimumCrossSection.Text += ($"Maximum flow: {sum}");
+                else
+                {
+                    MinimumCrossSection.Text = ("No min-cuts:\n");
+                }
+                if (n == 1)
+                    MinimumCrossSection.Text = "Maximum flow: infinity";
+                else
+                    MinimumCrossSection.Text += ($"Maximum flow: {sum}");
 
                 foreach (var v in verts)
                 {
